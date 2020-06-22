@@ -1,55 +1,36 @@
-# aws_terraform
-
-## start the jenkins website using ec2
-
-### First create  terraform file
-```
-touch web.tf 
-```
-### Edit the terraform file for aws, null and tls (SSH RSA Gerenate) 
-```
 provider "aws" {
   profile =  "aman1"
   region  = "ap-south-1"
 }
 
-resource "null_resource" "null_remote" {
-	
-}
+
+// SSH RSA Generate 
 
 resource "tls_private_key" "webserver_private_key" {
  algorithm = "RSA"
  rsa_bits = 4096
+
 }
-```
 
 
-### download package aws, null and tls using file 
-
-```
-terraform init
-```
-
-### Create Key pair
-```
+// Create the key pairs 
 
 resource "local_file" "private_key" {
  content = tls_private_key.webserver_private_key.private_key_pem
  filename = "webserver_key.pem"
  file_permission = 0400
-
 }
+
 
 
 resource "aws_key_pair" "webserver_key" {
- key_name = "webserver"
+ key_name = "webserver_key"
  public_key = tls_private_key.webserver_private_key.public_key_openssh
 
 }
-```
 
-### Create Security Groups (Firewall) including http and SSH
-```
+
+// Create Security Groups (Firewall) including http and SSH
 
 resource "aws_security_group" "allow_http_ssh" {
 
@@ -58,9 +39,9 @@ resource "aws_security_group" "allow_http_ssh" {
   vpc_id      = "vpc-075e88e4d7296ca92"
 
 ingress {
-    description = "http"
-    from_port   = 80
-    to_port     = 80
+    description = "jenkins"
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   } 
@@ -82,11 +63,8 @@ ingress {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }  
-```
 
-### Now,
-### Create EC2 ( Web Server ) with key pairs and security groups and install wget, Jenkins  
-```
+
 resource "aws_instance" "web" {
   ami           = "ami-0447a12f28fddb066"
   instance_type = "t2.micro"
@@ -123,10 +101,7 @@ provisioner "remote-exec" {
 
  }
 
-```
 
-### Open Jenkins Url 
-```
 resource "null_resource" "nulllocal1"  {
 
 	provisioner "local-exec" {
@@ -150,26 +125,12 @@ resource "null_resource" "nulllocal1"  {
 }
   }
 }
-```
 
 
 
-### All Output 
-```
 output "myos_ip" {
   value = aws_instance.web.public_ip
 }
 
-```
 
-### After Save the file web.tf
-
-### Open CMD
-
-```
-cd I:\aman\terra
-```
-### then Run it
-```
-terraform apply
-```
+  
